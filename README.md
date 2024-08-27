@@ -8,11 +8,11 @@
 
 <br>
 
-Este script permite crear de forma interactiva un servicio que se iniciara cada vez que se inicie la raspberry. Puede correr un archivo en Python, NodeJS o Bash. Para crear el servicio:
+Este script permite crear de forma interactiva un servicio que se iniciara cada vez que se inicie la raspberry. Puede correr un archivo en Python, NodeJS o Bash. Para crear el servicio debemos tener presente:
 
 1. Definir un nombre para el servicio.
-2. Definir con que programa vamos abrir la aplicación (Python, NodeJS o Bash).
-3. Tener la ruta del archivo a ejecutar (ejemplo: /home/hello-world.py).
+2. Definir con que programa vamos abrir la aplicación (python3, node o bash).
+3. Tener la ruta del archivo a ejecutar (ejemplo: /home/carjavi/hello-world.py).
 
 
 <br>
@@ -70,7 +70,7 @@ read -p "Ingresa el nombre del servicio: " SERVICE_NAME
 read -p "Ingresa con que aplication se va a correr el serivicio (python3/node/bash): " EXEC_START
 
 # Path y nombre del archivo a correr
-read -p "Nombre del archivo a correr (ejemplo: /home/hello-world.py): " FILE_PATH
+read -p "Nombre del archivo a correr (ejemplo: /home/carjavi/hello-world.py): " FILE_PATH
 
 echo
 echo "------------------------------"

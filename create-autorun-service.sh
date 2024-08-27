@@ -49,7 +49,7 @@ read -p "Ingresa el nombre del servicio: " SERVICE_NAME
 read -p "Ingresa con que aplication se va a correr el serivicio (python3/node/bash): " EXEC_START
 
 # Path y nombre del archivo a correr
-read -p "Nombre del archivo a correr (ejemplo: /home/hello-world.py): " FILE_PATH
+read -p "Nombre del archivo a correr (ejemplo: /home/carjavi/hello-world.py): " FILE_PATH
 
 echo
 echo "------------------------------"
