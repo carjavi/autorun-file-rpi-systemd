@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 # Define colors
 readonly ANSI_RED="\033[0;31m"
 readonly ANSI_GREEN="\033[0;32m"
@@ -31,15 +30,11 @@ echo -e "\033[1;32m*************************************************************
 echo -e "\n\n"
 }
 
-
-
 # calling Titulo 
-display_welcome
-    
+display_welcome  
 
 #sleep 3seg
 sleep 3
-
 
 # Comprobando si el script se está ejecutando con privilegios de superusuario
 if [ "$EUID" -ne 0 ]; then 
@@ -56,13 +51,11 @@ read -p "Ingresa con que aplication se va a correr el serivicio (python3/node/ba
 # Path y nombre del archivo a correr
 read -p "Nombre del archivo a correr (ejemplo: /home/hello-world.py: " FILE_PATH
 
-
 echo
 echo "------------------------------"
 echo "Install and Start Services..."
 echo "------------------------------"
 echo
-
 
 # Contenido del archivo .service
 SERVICE_CONTENT="[Unit]
