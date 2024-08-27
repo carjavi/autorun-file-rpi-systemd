@@ -1,4 +1,4 @@
-<p align="center"><img src="./img/bashlogo.png" width="400"  alt=" " /></p>
+<p align="center"><img src="./img/bashlogo.png" width="500"  alt=" " /></p>
 <h1 align="center">Run a program on your Raspberry Pi at Startup with Daemon Service SYSTEMD</h1> 
 <h4 align="right">Aug 24</h4>
 
@@ -7,15 +7,15 @@
 <img src="https://img.shields.io/badge/Hardware-Raspberry%20Zero-red">
 
 <br>
-Este script permite crear de forma interactiva un servicio que se iniciara cada vez que se inicie la raspberry.
+
+Este script permite crear de forma interactiva un servicio que se iniciara cada vez que se inicie la raspberry. Puede correr un archivo en Python, NodeJS o Bash
 
 
 <br>
 
-create-autorun-service.sh
+```create-autorun-service.sh```
 ```
 #!/usr/bin/env bash
-
 
 # Define colors
 readonly ANSI_RED="\033[0;31m"
@@ -47,15 +47,11 @@ echo -e "\033[1;32m*************************************************************
 echo -e "\n\n"
 }
 
-
-
 # calling Titulo 
 display_welcome
     
-
 #sleep 3seg
 sleep 3
-
 
 # Comprobando si el script se está ejecutando con privilegios de superusuario
 if [ "$EUID" -ne 0 ]; then 
@@ -72,13 +68,11 @@ read -p "Ingresa con que aplication se va a correr el serivicio (python3/node/ba
 # Path y nombre del archivo a correr
 read -p "Nombre del archivo a correr (ejemplo: /home/hello-world.py: " FILE_PATH
 
-
 echo
 echo "------------------------------"
 echo "Install and Start Services..."
 echo "------------------------------"
 echo
-
 
 # Contenido del archivo .service
 SERVICE_CONTENT="[Unit]
@@ -125,7 +119,6 @@ echo "-------------------------------------"
 echo
 
 sleep 10 && reboot
-
 ```
 
 <br>
