@@ -31,8 +31,8 @@ echo -e "\n\n"
 }
 
 # calling Titulo 
-display_welcome  
-
+display_welcome
+    
 #sleep 3seg
 sleep 3
 
@@ -48,12 +48,15 @@ read -p "Ingresa el nombre del servicio: " SERVICE_NAME
 # Solicitar comando ExecStart
 read -p "Ingresa con que aplication se va a correr el serivicio (python3/node/bash): " EXEC_START
 
-# Path y nombre del archivo a correr
-read -p "Nombre del archivo a correr (ejemplo: /home/carjavi/hello-world.py): " FILE_PATH
+# Path del archivo a correr
+read -p "Path del archivo a correr (ejemplo: /home/carjavi/): " FILE_PATH
+
+# Nombre del archivo a correr
+read -p "Nombre del archivo a correr (ejemplo: hello-world.py): " NAME_FILE
 
 echo
 echo "------------------------------"
-echo "Install and Start Services..."
+echo "Creating the service file..."
 echo "------------------------------"
 echo
 
@@ -63,7 +66,7 @@ Description=$SERVICE_NAME
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/$EXEC_START $FILE_PATH
+ExecStart=/bin/bash -c 'cd $FILE_PATH && $EXEC_START $NAME_FILE'
 Restart=on-failure
 
 [Install]
@@ -77,23 +80,26 @@ echo "$SERVICE_CONTENT" > $SERVICE_PATH
 
 echo
 echo "-------------------------------------"
-echo "Service $SERVICE_NAME created and started successfully."
+echo "$SERVICE_NAME Service created successfully."
 echo "-------------------------------------"
 echo
+
+# permission (Propietario: Puede leer y escribir el archivo /Grupo y otros solo lectura)
+chmod 644 /etc/systemd/system/$SERVICE_NAME.service
 
 # Start deamon code
 systemctl daemon-reload
 systemctl enable $SERVICE_NAME
 systemctl start $SERVICE_NAME
 
+echo
+echo "-------------------------------------"
+echo "$SERVICE_NAME Service started successfully."
+echo "-------------------------------------"
+echo
+
 # Delete installer
 #create-autorun-service.sh
-
-echo
-echo "-------------------------------------"
-echo "Service $SERVICE_NAME created and started successfully."
-echo "-------------------------------------"
-echo
 
 echo
 echo "-------------------------------------"

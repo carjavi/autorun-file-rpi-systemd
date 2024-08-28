@@ -17,8 +17,8 @@ Este script permite crear de forma interactiva un servicio que se iniciara cada 
 
 <br>
 
-```file: create-autorun-service.sh```
-```
+```create-autorun-service.sh```
+```bash 
 #!/usr/bin/env bash
 
 # Define colors
@@ -69,12 +69,15 @@ read -p "Ingresa el nombre del servicio: " SERVICE_NAME
 # Solicitar comando ExecStart
 read -p "Ingresa con que aplication se va a correr el serivicio (python3/node/bash): " EXEC_START
 
-# Path y nombre del archivo a correr
-read -p "Nombre del archivo a correr (ejemplo: /home/carjavi/hello-world.py): " FILE_PATH
+# Path del archivo a correr
+read -p "Path del archivo a correr (ejemplo: /home/carjavi/): " FILE_PATH
+
+# Nombre del archivo a correr
+read -p "Nombre del archivo a correr (ejemplo: hello-world.py): " NAME_FILE
 
 echo
 echo "------------------------------"
-echo "Install and Start Services..."
+echo "Creating the service file..."
 echo "------------------------------"
 echo
 
@@ -84,7 +87,7 @@ Description=$SERVICE_NAME
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/$EXEC_START $FILE_PATH
+ExecStart=/bin/bash -c 'cd $FILE_PATH && $EXEC_START $NAME_FILE'
 Restart=on-failure
 
 [Install]
@@ -98,23 +101,26 @@ echo "$SERVICE_CONTENT" > $SERVICE_PATH
 
 echo
 echo "-------------------------------------"
-echo "Service $SERVICE_NAME created and started successfully."
+echo "$SERVICE_NAME Service created successfully."
 echo "-------------------------------------"
 echo
+
+# permission (Propietario: Puede leer y escribir el archivo /Grupo y otros solo lectura)
+chmod 644 /etc/systemd/system/$SERVICE_NAME.service
 
 # Start deamon code
 systemctl daemon-reload
 systemctl enable $SERVICE_NAME
 systemctl start $SERVICE_NAME
 
+echo
+echo "-------------------------------------"
+echo "$SERVICE_NAME Service started successfully."
+echo "-------------------------------------"
+echo
+
 # Delete installer
 #create-autorun-service.sh
-
-echo
-echo "-------------------------------------"
-echo "Service $SERVICE_NAME created and started successfully."
-echo "-------------------------------------"
-echo
 
 echo
 echo "-------------------------------------"
@@ -128,42 +134,153 @@ sleep 10 && reboot
 <br>
 
 > :warning: **Warning:** Para correr el archivo hay que darle permiso de ejecución:
-```
+```bash 
 sudo chmod +x create-autorun-service.sh
 ```
+
+## Run Script
+```bash 
+sudo ./create-autorun-service.sh --verbose
+```
+
 
 <br>
 
 # Daemon Service SYSTEMD commands (summary)
-```
-sudo systemctl daemon-reload
+```bash 
+sudo systemctl daemon-reload # Recarga su configuración. Esto es necesario después de hacer cambios en los archivos de configuración de unidades
 sudo systemctl status SERVICE_NAME
 sudo systemctl stop SERVICE_NAME
 sudo systemctl start SERVICE_NAME
 sudo systemctl disable SERVICE_NAME
 sudo systemctl enable SERVICE_NAME
 sudo systemctl restart SERVICE_NAME
+systemctl --failed  #ver los servicios que fallaron
+systemctl list-unit-files --type=service --state=enabled # Ver todos los servicios que inician automáticamente al arrancar el sistema
+
 ```
 # Edit Service
 > :warning: **Warning:** ```sudo systemctl daemon-reload```deberá ingresar este  comando cada vez que cambie su archivo .service,ya que systemd necesita saber que se ha actualizado.
-```
+```bash 
 sudo nano /etc/systemd/system/SERVICE_NAME
 ```
 
+
 # Debugging
 La salida de systemd (por ejemplo, sentencias print() o mensajes de error) es capturada por el sistema journalctl y se puede ver con el siguiente comando:
-```
+```bash 
 sudo journalctl -f -u SERVICE_NAME
 ```
 Esto puede dar una idea de lo que está pasando con su servicio o programa.
 
 # Delete service
-```
-sudo rm /lib/systemd/system/clock.service
+```bash 
+sudo rm /lib/systemd/system/SERVICE_NAME.service
 sudo systemctl daemon-reload
 sudo reboot
 ```
+<br>
 
+# Considerations
+## Ejecutar directamente la aplicación desde el Daemon Service SYSTEMD
+ejemplo:
+```bash 
+ExecStart=/usr/bin/python /path-to-your-python-project/python_file.py
+```
+
+```La forma más sencilla de ejecutar un script de Python, pero no se recomienda en la mayoría de los casos.``` El  no proporcionar la ruta correcta de Pythono y Nodejs traerá problema para reconocer los módulos y librerías necesarios para correr la aplicación. 
+
+<br>
+
+## Ejecutar Python o NodeJS dentro de la carpeta donde esta la aplicación en el Daemon Service SYSTEMD
+ejemplo:
+```bash 
+ExecStart=/bin/bash -c 'cd /home/ubuntu/project/ && python app.py'
+```
+```Esta sería la mejor forma de correr una aplicación.``` Es mejor ir a la carpeta correspondiente y ejecutar scripts de Python o NodeJS allí. Te relajas con respecto a las rutas de carpetas que no coinciden. Ahora estamos usando bash para ejecutar varios scripts.
+
+El comando ```bash -c``` se utiliza para ejecutar una cadena de comandos de Bash directamente desde la línea de comandos. ```-c``` Indica que lo que sigue es una cadena de comandos a ejecutar. separados por ```;```, ```&&```, o ```||```, dependiendo de cómo quieras encadenar la ejecución. ejemplo:
+```bash 
+bash -c "comando1; comando2; comando3"
+```
+
+<br>
+
+## Ejecutar la aplicación con su entorno en el Daemon Service SYSTEMD
+ejemplo python virtual environment (entorno virtual de Python):
+```bash 
+ExecStart=/bin/bash -c 'cd /home/ubuntu/project/ && source env/bin/activate && python app.py'
+```
+Esta es otra forma recomendada. Después de eso, puedes agregar tantos comandos como quieras
+
+<br>
+
+<br>
+
+# Another method to run a program when starting the raspberry
+
+## (rc.local)
+This is especially useful if you want to power up your Pi without a connected monitor, and have it run a program without configuration or a manual start.
+
+1. permiso de ejecución al archivo
+  ```bash 
+  $ sudo chmod +x fichero.py
+  ```
+2. sudo nano /etc/rc.local
+
+```bash 
+...
+python3 /home/pi/fichero.py
+/usr/bin/python3 /home/pi/example.py
+node /home/pi/fichero.js
+sudo bash /home/pi/di_update/Raspbian_For_Robots/upd_script/rc.sh
+
+exit 0
+```
+ > :memo: **Note:** Si programa debe devolver el control al script o la Raspberry Pi nunca podrá terminar de arrancar. Si su programa realiza un bucle infinito, debe ejecutarlo en segundo plano agregando un & después de ordenar. En nuestro caso esto daría:
+```bash 
+/usr/bin/python3 /home/pi/example.py &
+```
+<br>
+
+## .bashrc
+rc.local es un buen lugar para iniciar su programa cada vez que se inicia el sistema (antes de que los usuarios puedan iniciar sesión o interactuar con el sistema). Si desea que su programa se inicie cada vez que un usuario inicie sesión o abra una nueva terminal, considere agregar una línea similar a /home/pi/.bashrc.
+```bash 
+sudo nano /home/pi/.bashrc
+```
+Go to the last line of the script and add:
+
+```bash 
+echo Running at boot 
+sudo python /home/pi/sample.py
+sudo reboot
+```
+<br>
+
+# Troubleshooting rc.local & .bashrc
+Estos métodos de arranque automáticos pueden dar problemas si la ruta de la aplicación no esta bien definida, los módulos y librerías que utiliza dicha operación dará problemas. Una solución es agregar la ruta de la aplicación antes de correr el programa. Ejemplo en Python:
+
+1. Desde el terminal correr: python3
+   ```
+   >>import sys
+   >>sys.path
+   ```
+2. El Output sera algo como:
+   ```
+   ['/usr/lib/python39.zip', '/usr/lib/python3.9', '/usr/lib/python3.9/lib-dynload', '/home/carjavi/.local/lib/python3.9/site-packages', '/usr/local/lib/python3.9/dist-packages', '/usr/lib/python3/dist-packages', '/usr/lib/python3.9/dist-packages']
+   ```
+3. con esta data se debe generar un String de este tipo
+   ```
+   export PATH="$PATH:/usr/lib/python39.zip:/usr/lib/python3.9:/usr/lib/python3.9/lib-dynload:/home/maquintel/.local/lib/python3.9/site-packages:/usr/local/lib/python3.9/dist-packages:/usr/lib/python3/dist-packages:/usr/lib/python3.9/dist-packages"
+   ```
+4. Este string debe antes de ejecutar el comando de arranque del archivo en ```rc.local``` ó ```.bashrc```. ejemplo:
+   ```
+   export PATH="$PATH:/usr/lib/python39.zip:/usr/lib/python3.9:/usr/lib/python3.9/lib-dynload:/home/maquintel/.local/lib/python3.9/site-packages:/usr/local/lib/python3.9/dist-packages:/usr/lib/python3/dist-packages:/usr/lib/python3.9/dist-packages"
+
+   sudo python3 /home/carjavi/sample.py
+   ```
+
+<br>
 
 more info: https://github.com/carjavi/raspberry-pi-guide?tab=readme-ov-file#daemon-service-systemd
 
