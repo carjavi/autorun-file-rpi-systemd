@@ -261,7 +261,7 @@ sed -i 's/\r//' script.sh
 # Basic format of a Daemon Service SYSTEMD file (file.service)
 ```
 [Unit]
-Description=Mi Servicio 
+Description=name_service 
 After=network.target
 
 [Service]
