@@ -45,14 +45,17 @@ fi
 # Solicitar nombre del servicio
 read -p "Ingresa el nombre del servicio: " SERVICE_NAME
 
-# Solicitar comando ExecStart
-read -p "Ingresa con que aplication se va a correr el serivicio (python3 -u/node/bash): " EXEC_START
-
 # Path del archivo a correr
-read -p "Path del archivo a correr (ejemplo: /home/carjavi/): " FILE_PATH
+read -p "Path del archivo a correr (ejemplo: /home/carjavi): " FILE_PATH
+
+# Solicitar comando ExecStart
+read -p "Ingresa con que aplication se va a correr el serivicio (python3 -u /node /bash): " EXEC_START
 
 # Nombre del archivo a correr
 read -p "Nombre del archivo a correr (ejemplo: hello-world.py): " NAME_FILE
+
+# Elimina la extensión del archivo usando 'basename'
+NAME_NO_EXTENSION="${NAME_FILE%.*}"
 
 echo
 echo "------------------------------"
@@ -66,8 +69,9 @@ Description=$SERVICE_NAME
 After=network.target
 
 [Service]
-ExecStart=/bin/bash -c 'cd $FILE_PATH && $EXEC_START $NAME_FILE'
+ExecStart=/bin/bash -c 'cd $FILE_PATH/ && $EXEC_START $NAME_FILE >> $NAME_NO_EXTENSION.log'
 Restart=on-failure
+StandardError=append:$FILE_PATH/${NAME_NO_EXTENSION}_error.log
 
 [Install]
 WantedBy=multi-user.target"

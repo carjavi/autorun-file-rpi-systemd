@@ -8,10 +8,10 @@
 
 <br>
 
-Este script permite crear de forma interactiva un servicio que se iniciara cada vez que se inicie la raspberry. Puede correr un archivo en Python, NodeJS o Bash. Para crear el servicio debemos tener presente:
+Usamos el systemd (el gestor de servicios de Linux), los archivos se ejecutan como servicios en segundo plano (daemons). Si necesitamos correr varios archivos, se pueden correr varios servicios independintes Este script permite crear de forma interactiva un servicio que se iniciara cada vez que se inicie la raspberry. Puede correr un archivo en Python, NodeJS o Bash. Para crear el servicio debemos tener presente:
 
 1. Definir un nombre para el servicio.
-2. Definir con que programa vamos abrir la aplicación (python3, node o bash).
+2. Definir con que programa vamos abrir la aplicación (python3 -u, node o bash).
 3. Tener la ruta del archivo a ejecutar (ejemplo: /home/carjavi/hello-world.py).
 
 
@@ -67,13 +67,16 @@ fi
 read -p "Ingresa el nombre del servicio: " SERVICE_NAME
 
 # Path del archivo a correr
-read -p "Path del archivo a correr (ejemplo: /home/carjavi/): " FILE_PATH
+read -p "Path del archivo a correr (ejemplo: /home/carjavi): " FILE_PATH
 
 # Solicitar comando ExecStart
-read -p "Ingresa con que aplication se va a correr el serivicio (python3 -u/node/bash): " EXEC_START
+read -p "Ingresa con que aplication se va a correr el serivicio (python3 -u /node /bash): " EXEC_START
 
 # Nombre del archivo a correr
 read -p "Nombre del archivo a correr (ejemplo: hello-world.py): " NAME_FILE
+
+# Elimina la extensión del archivo usando 'basename'
+NAME_NO_EXTENSION="${NAME_FILE%.*}"
 
 echo
 echo "------------------------------"
@@ -87,8 +90,9 @@ Description=$SERVICE_NAME
 After=network.target
 
 [Service]
-ExecStart=/bin/bash -c 'cd $FILE_PATH && $EXEC_START $NAME_FILE >> $FILE_PATH$SERVICE_NAME.log'
+ExecStart=/bin/bash -c 'cd $FILE_PATH/ && $EXEC_START $NAME_FILE >> $NAME_NO_EXTENSION.log'
 Restart=on-failure
+StandardError=append:$FILE_PATH/${NAME_NO_EXTENSION}_error.log
 
 [Install]
 WantedBy=multi-user.target"
@@ -143,9 +147,21 @@ sudo chmod +x create-autorun-service.sh
 sudo ./create-autorun-service.sh --verbose
 ```
 
-> :bulb: **Tip:** Si deseamos correr un archivo Python3, conviene usar la opción ```-u``` ya que ayuda a ver los valores de salida en tiempo real si usamos ```journalctl```.
+> :memo: **Note:** 
+Se creará un archivo con el mismo nombre del servicio pero ```.log``` que registrará todas las salidas (stout) print/console del archivo que esta correindo. La salida no sobreescribirá el archivo sino que agregará al final del archivo sin sobreescribirlo por completo.
+
+> Al usar ```journalctl``` no podremos ver las salidas (stout) en pantalla porque estan dirigidas al ```SERVICE_NAME.log```, si quieramos ver las salidas, deberiamos de quitar el direccionamiento al ```.log```, este; ```>> $NAME_NO_EXTENSION.log```
 > 
-> Se creará un archivo con el mismo nombre del servicio pero ```.log``` que registrará todas las salidas (stout) print/console del archivo que esta correindo. La salida no sobre-escribirá el archivo sino que agregará sin sobreescribirlo
+> Si deseamos correr un archivo Python3, conviene usar la opción ```-u``` ya que ayuda a ver los valores de salida (stout) en tiempo real si usamos ```journalctl```.
+>
+> Si queremos borrar el ```log``` cada vez que inicie sera con un solo ```>```. 
+>
+>```Restart=always```: Reinicia el servicio siempre, independientemente de la razón por la cual se detuvo el servicio.Esto incluye fallos (errores) y paradas limpias (cuando el servicio se detiene manualmente o finaliza correctamente).Es útil en situaciones donde deseas que el servicio esté activo en todo momento, sin importar cómo se haya detenido. Es útil si deseas que el servicio siempre esté en ejecución, independientemente de si falla o termina correctamente.
+>
+>```Restart=on-failure```: Reinicia el servicio solo cuando falla, es decir, cuando el servicio termina con un código de error o una excepción inesperada. No reiniciará el servicio si este se detiene correctamente, ya sea porque completó su tarea o fue detenido manualmente mediante systemctl stop. Es preferible cuando solo quieres que el servicio se reinicie en caso de errores, pero no quieres que vuelva a empezar si termina sin problemas o es detenido manualmente.
+>
+> WantedBy=multi-user.target: Hace que el servicio se inicie automáticamente en el nivel de ejecución multiusuario.
+
 <br>
 
 # Daemon Service SYSTEMD commands (summary)
@@ -164,20 +180,21 @@ systemctl list-unit-files --type=service --state=enabled # Ver todos los servici
 # Edit Service
 > :warning: **Warning:** ```sudo systemctl daemon-reload```deberá ingresar este  comando cada vez que cambie su archivo .service,ya que systemd necesita saber que se ha actualizado.
 ```bash 
-sudo nano /etc/systemd/system/SERVICE_NAME
+sudo nano /etc/systemd/system/SERVICE_NAME.service
 ```
 
 
-# Debugging
+# Debugging (Para ver los logs del servicio en vivo)
 La salida de systemd (por ejemplo, sentencias print() o mensajes de error) es capturada por el sistema journalctl y se puede ver con el siguiente comando:
 ```bash 
 sudo journalctl -f -u SERVICE_NAME
 ```
 Esto puede dar una idea de lo que está pasando con su servicio o programa.
+> :memo: **Note:** No se mostrará nada en pantalla si esta dirigido a un archivo ```.log```
 
 # Delete service
 ```bash 
-sudo rm /lib/systemd/system/SERVICE_NAME.service
+sudo rm /etc/systemd/system/SERVICE_NAME.service
 sudo systemctl daemon-reload
 sudo reboot
 ```
@@ -214,6 +231,31 @@ ejemplo python virtual environment (entorno virtual de Python):
 ExecStart=/bin/bash -c 'cd /home/ubuntu/project/ && source env/bin/activate && python app.py'
 ```
 Esta es otra forma recomendada. Después de eso, puedes agregar tantos comandos como quieras
+
+<br>
+
+# Troubleshooting
+
+En caso de error como: ```/usr/bin/env: ‘bash\r’: No such file or directory``` <br>
+es porque el archivo no esta en formato Unix/linux. Solución:<br>
+
+**Option 1**<br>
+Usar un editor de texto con soporte para Unix, asegúrate de guardar el archivo en formato Unix:<br>
+
+```VS Code:``` Cambia el formato de final de línea desde la barra de estado en la esquina inferior derecha **(cambiar de CRLF a LF)**.
+
+**Option 2**<br>
+Esta app transformará el archivo windows a Unix/linux 
+```
+sudo apt-get install dos2unix
+dos2unix name_script.sh
+```
+
+**Option 3**<br>
+```
+sed -i 's/\r//' script.sh
+```
+
 
 <br>
 
