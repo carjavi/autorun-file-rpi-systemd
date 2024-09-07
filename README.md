@@ -265,7 +265,7 @@ Description=Mi Servicio
 After=network.target
 
 [Service]
-ExecStart=/bin/bash -c ' /path/ && python3 -u app.py'
+ExecStart=/bin/bash -c '/path/ && python3 -u app.py'
 Restart=on-failure
 StandardOutput=append:/path/app.log
 
