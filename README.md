@@ -256,7 +256,22 @@ dos2unix name_script.sh
 sed -i 's/\r//' script.sh
 ```
 
+<br>
 
+# Basic format of a Daemon Service SYSTEMD file (file.service)
+```
+[Unit]
+Description=Mi Servicio 
+After=network.target
+
+[Service]
+ExecStart=/bin/bash -c ' /path/ && python3 -u app.py'
+Restart=on-failure
+StandardOutput=append:/path/app.log
+
+[Install]
+WantedBy=multi-user.target
+```
 <br>
 
 <br>
