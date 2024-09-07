@@ -66,11 +66,11 @@ fi
 # Solicitar nombre del servicio
 read -p "Ingresa el nombre del servicio: " SERVICE_NAME
 
-# Solicitar comando ExecStart
-read -p "Ingresa con que aplication se va a correr el serivicio (python3/node/bash): " EXEC_START
-
 # Path del archivo a correr
 read -p "Path del archivo a correr (ejemplo: /home/carjavi/): " FILE_PATH
+
+# Solicitar comando ExecStart
+read -p "Ingresa con que aplication se va a correr el serivicio (python3 -u/node/bash): " EXEC_START
 
 # Nombre del archivo a correr
 read -p "Nombre del archivo a correr (ejemplo: hello-world.py): " NAME_FILE
@@ -87,7 +87,7 @@ Description=$SERVICE_NAME
 After=network.target
 
 [Service]
-ExecStart=/bin/bash -c 'cd $FILE_PATH && $EXEC_START $NAME_FILE'
+ExecStart=/bin/bash -c 'cd $FILE_PATH && $EXEC_START $NAME_FILE >> $FILE_PATH$SERVICE_NAME.log'
 Restart=on-failure
 
 [Install]
@@ -143,7 +143,9 @@ sudo chmod +x create-autorun-service.sh
 sudo ./create-autorun-service.sh --verbose
 ```
 
-
+> :bulb: **Tip:** Si deseamos correr un archivo Python3, conviene usar la opción ```-u``` ya que ayuda a ver los valores de salida en tiempo real si usamos ```journalctl```.
+> 
+> Se creará un archivo con el mismo nombre del servicio pero ```.log``` que registrará todas las salidas (stout) print/console del archivo que esta correindo. La salida no sobre-escribirá el archivo sino que agregará sin sobreescribirlo
 <br>
 
 # Daemon Service SYSTEMD commands (summary)

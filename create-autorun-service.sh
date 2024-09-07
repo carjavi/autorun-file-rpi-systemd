@@ -46,7 +46,7 @@ fi
 read -p "Ingresa el nombre del servicio: " SERVICE_NAME
 
 # Solicitar comando ExecStart
-read -p "Ingresa con que aplication se va a correr el serivicio (python3/node/bash): " EXEC_START
+read -p "Ingresa con que aplication se va a correr el serivicio (python3 -u/node/bash): " EXEC_START
 
 # Path del archivo a correr
 read -p "Path del archivo a correr (ejemplo: /home/carjavi/): " FILE_PATH
