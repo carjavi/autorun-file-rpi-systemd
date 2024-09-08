@@ -558,6 +558,18 @@ if __name__ == "__main__":
     main()
 ```
 
+> :warning: **Warning:** <br>
+> Probado en Windows:  
+> * numpy 2.1.1
+> * python 3.12.2
+> * pip 24.2 <br>
+> 
+> Problemas en RPi zero:<br>
+> * numpy 2.0.2 <-- error
+> * python 3.9
+> * pip 24.2
+> 
+
 
 <br>
 
