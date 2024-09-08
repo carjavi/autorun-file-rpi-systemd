@@ -279,19 +279,6 @@ WantedBy=multi-user.target
 # Plotter file.log
 Esta app grafica el archivo ```.log``` localmente en el mismo directorio. Permite graficar de forma interactiva todas las salidas (stout) o elegir que variable se desea graficar. Después de graficar es posible salvar un PNG del plotter. Cuando se pide graficar todas las salidas se hacen secuencialmente y cada variable se grafica en función del tiempo, que puede elegirse en un menú interactivo entre (dia, mes o intervalo de tiempo). pueden haber varios archivos .log en el mismo directorio, la app permitira elegir cual archivo graficar. No importa cuantas variables esten almacenadas en el log.
 
-El archivo ```.log``` debe tener un formato parecido a este: <br>
-
-```sample.log```
-```
-[07-09-2024 19:15:02], cpu_temp: 41.16°C, magnitud1: 39.55°C, magnitud2: 100%, magnitud3: 13.8V, magnitud4: 0.22NTU
-[07-09-2024 19:15:04], cpu_temp: 40.62°C, magnitud1: 19.55°C, magnitud2: 50%, magnitud3: 16.8V, magnitud4: 0.28NTU
-[07-09-2024 19:15:06], cpu_temp: 41.16°C, magnitud1: 29.55°C, magnitud2: 50%, magnitud3: 13.8V, magnitud4: 0.58NTU
-[07-09-2024 19:15:08], cpu_temp: 41.16°C, magnitud1: 56.55°C, magnitud2: 80%, magnitud3: 13.8V, magnitud4: 0.28NTU
-[07-09-2024 19:15:10], cpu_temp: 40.08°C, magnitud1: 45.55°C, magnitud2: 50%, magnitud3: 13.8V, magnitud4: 0.28NTU
-[07-09-2024 19:15:12], cpu_temp: 41.16°C, magnitud1: 19.55°C, magnitud2: 50%, magnitud3: 17.8V, magnitud4: 0.28NTU
-```
-
-
 ```plotter_log.py```
 ```python
 # pip install matplotlib pandas
@@ -521,6 +508,55 @@ python plotter_log.py
 
 ejemplo de grafica:
 <p align="center"><img src="./img/Figure_1.png" width="800"  alt=" " /></p>
+
+El archivo ```.log``` debe tener un formato parecido a este: <br>
+
+```sample.log```
+```
+[07-09-2024 19:15:02], cpu_temp: 41.16°C, magnitud1: 39.55°C, magnitud2: 100%, magnitud3: 13.8V, magnitud4: 0.22NTU
+[07-09-2024 19:15:04], cpu_temp: 40.62°C, magnitud1: 19.55°C, magnitud2: 50%, magnitud3: 16.8V, magnitud4: 0.28NTU
+[07-09-2024 19:15:06], cpu_temp: 41.16°C, magnitud1: 29.55°C, magnitud2: 50%, magnitud3: 13.8V, magnitud4: 0.58NTU
+[07-09-2024 19:15:08], cpu_temp: 41.16°C, magnitud1: 56.55°C, magnitud2: 80%, magnitud3: 13.8V, magnitud4: 0.28NTU
+[07-09-2024 19:15:10], cpu_temp: 40.08°C, magnitud1: 45.55°C, magnitud2: 50%, magnitud3: 13.8V, magnitud4: 0.28NTU
+[07-09-2024 19:15:12], cpu_temp: 41.16°C, magnitud1: 19.55°C, magnitud2: 50%, magnitud3: 17.8V, magnitud4: 0.28NTU
+```
+
+sample ```file.py``` (autorunfile) generator ```file.log```.
+
+```temp_cpu_rpi.py```
+```python
+import time
+from datetime import datetime
+
+
+def obtener_fecha_hora():
+    # Obtiene la fecha y la hora actual en el formato deseado
+    ahora = datetime.now()
+    fecha = ahora.strftime("%d-%m-%Y")
+    hora = ahora.strftime("%H:%M:%S")
+    return fecha, hora
+
+
+def leer_temperatura():
+    # Abre el archivo que contiene la temperatura de la CPU
+    with open("/sys/class/thermal/thermal_zone0/temp", "r") as archivo:
+        # Lee el valor en miligrados Celsius y conviértelo a grados Celsius
+        temp_miligrados = int(archivo.read())
+        temperatura_celsius = temp_miligrados / 1000.0
+    return temperatura_celsius
+
+
+
+def main():
+    while True:
+        temperatura = leer_temperatura()
+        fecha, hora = obtener_fecha_hora()
+        print(f"[{fecha} {hora}], cpu_temp: {temperatura:.2f}°C")
+        time.sleep(2)  # Espera 2 segundos antes de la próxima lectura
+
+if __name__ == "__main__":
+    main()
+```
 
 
 <br>
