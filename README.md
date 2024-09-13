@@ -283,6 +283,10 @@ Esta app grafica el archivo ```.log``` localmente en el mismo directorio. Permit
 ```python
 # pip install matplotlib pandas
 
+# Permite elegir si graficar todas las columnas (variables) o una en específica. Cuando imprime todas las 
+# gráficas las hace secuencialmente una a una, ya que todas en una misma hoja no se ven muy bien.
+# es posible imprimir que fila no cuamplen con el formato (filas donde se produjo un error)
+
 import matplotlib.pyplot as plt
 import pandas as pd
 from datetime import datetime
@@ -303,20 +307,31 @@ def read_log_file(log_file):
             for line in file:
                 data = line.strip().split(',')
                 date_str = data[0].strip('[]')
-                date = datetime.strptime(date_str, '%d-%m-%Y %H:%M:%S')
-                
+
+                # Intentar convertir el string de la fecha al formato adecuado
+                try:
+                    date = datetime.strptime(date_str, '%d-%m-%Y %H:%M:%S')
+                except ValueError:
+                    # Si la fecha no tiene el formato esperado, se omite la línea
+                    # print(f"Skipping line with invalid date format: {line.strip()}")
+                    continue
+
                 for item in data[1:]:
-                    name, value_with_unit = item.split(':')
-                    value_str = ''.join([char for char in value_with_unit if char.isdigit() or char == '.'])
-                    value = float(value_str)
-                    unit = value_with_unit.replace(value_str, '').strip()
+                    try:
+                        name, value_with_unit = item.split(':')
+                        value_str = ''.join([char for char in value_with_unit if char.isdigit() or char == '.'])
+                        value = float(value_str)
+                        unit = value_with_unit.replace(value_str, '').strip()
 
-                    if name not in data_dict:
-                        data_dict[name] = {'values': [], 'units': []}
+                        if name not in data_dict:
+                            data_dict[name] = {'values': [], 'units': []}
 
-                    data_dict[name]['values'].append(value)
-                    data_dict[name]['units'].append(unit)
-                    data_dict[name]['dates'] = data_dict[name].get('dates', []) + [date]
+                        data_dict[name]['values'].append(value)
+                        data_dict[name]['units'].append(unit)
+                        data_dict[name]['dates'] = data_dict[name].get('dates', []) + [date]
+                    except Exception as e:
+                        # print(f"Skipping invalid data format in line: {line.strip()} - Error: {e}")
+                        continue
 
         df_dict = {}
         for name, info in data_dict.items():
@@ -329,6 +344,47 @@ def read_log_file(log_file):
     except Exception as e:
         print(f"Error reading {log_file}: {e}")
         return {}
+
+# Función para graficar una columna específica
+def plot_by_type(df_dict, data_type, period='day', start_date=None, end_date=None, min_value=None, max_value=None):
+    try:
+        if data_type not in df_dict:
+            print(f"No data available for type {data_type}")
+            return
+
+        df = df_dict[data_type]
+        
+        if period == 'day':
+            if start_date:
+                start_date = datetime.strptime(start_date, '%d-%m-%Y')
+                df = df[df.index.date == start_date.date()]
+        elif period == 'month':
+            if start_date:
+                month = datetime.strptime(start_date, '%m-%Y')
+                df = df[(df.index.month == month.month) & (df.index.year == month.year)]
+        elif period == 'range':
+            if start_date and end_date:
+                start_date = datetime.strptime(start_date, '%d-%m-%Y')
+                end_date = datetime.strptime(end_date, '%d-%m-%Y')
+                df = df[(df.index >= start_date) & (df.index <= end_date)]
+        elif period == 'value_range':
+            if min_value is not None and max_value is not None:
+                df = df[(df[df.columns[0]] >= min_value) & (df[df.columns[0]] <= max_value)]
+
+        if df.empty:
+            print(f"No data available for the specified criteria.")
+            return
+
+        plt.figure(figsize=(10, 5))
+        plt.plot(df.index, df[df.columns[0]], marker='o', linestyle='-', color='b')
+        plt.title(f'{data_type} over time')
+        plt.xlabel('Time')
+        plt.ylabel(df.columns[0])
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.show()
+    except Exception as e:
+        print(f"Error plotting data for {data_type}: {e}")
 
 # Función para graficar una columna específica
 def plot_by_type(df_dict, data_type, period='day', start_date=None, end_date=None, min_value=None, max_value=None):
@@ -498,15 +554,14 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 ```
 
-Run plotter
+## Run plotter
 ```python
 python plotter_log.py
 ```
 
-ejemplo de grafica:
+ejemplo de una de las graficas:
 <p align="center"><img src="./img/Figure_1.png" width="800"  alt=" " /></p>
 
 El archivo ```.log``` debe tener un formato parecido a este: <br>
