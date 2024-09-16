@@ -265,9 +265,9 @@ Description=name_service
 After=network.target
 
 [Service]
-ExecStart=/bin/bash -c '/path/ && python3 -u app.py >> app.log'
+ExecStart=/bin/bash -c 'cd /<path>/ && python3 -u app.py >> app.log'
 Restart=on-failure
-StandardOutput=append:/path/app.log
+StandardOutput=append:/<path>/app.log
 
 [Install]
 WantedBy=multi-user.target
