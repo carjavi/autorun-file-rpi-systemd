@@ -265,13 +265,27 @@ Description=name_service
 After=network.target
 
 [Service]
-ExecStart=/bin/bash -c 'cd /<path>/ && python3 -u app.py >> app.log'
+ExecStart=/bin/bash -c 'cd /<path>/ && sudo python3 -u app.py >> app.log'
 Restart=on-failure
 StandardOutput=append:/<path>/app.log
 
 [Install]
 WantedBy=multi-user.target
 ```
+Commands Control
+```bash
+sudo nano /etc/systemd/system/SERVICE_NAME.service
+sudo systemctl daemon-reload
+sudo chmod +x app.py
+sudo journalctl -f -u SERVICE_NAME.service
+sudo systemctl status SERVICE_NAME.service
+sudo systemctl restart SERVICE_NAME.service
+sudo systemctl start SERVICE_NAME.service
+sudo systemctl stop SERVICE_NAME.service
+sudo systemctl enable SERVICE_NAME.service
+sudo systemctl disable SERVICE_NAME.service
+```
+
 <br>
 
 <br>
